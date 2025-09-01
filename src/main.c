@@ -278,7 +278,6 @@ static gchar* build_audio_pipeline(const gchar *audio_codec, gint audio_bitrate_
 
 static void discover_ndi_sources(void) {
     g_printerr("Discovering NDI sources...\n");
-    g_printerr("Note: This requires NDI SDK and GStreamer NDI plugin to be properly installed.\n\n");
     
     // Create a device monitor for NDI sources
     GstDeviceMonitor *monitor = gst_device_monitor_new();
