@@ -1,6 +1,6 @@
 # NDI2SRT - NDI to SRT Transcoder with SMPTE Timecode Injection
 
-A high-performance transcoder that converts NDI (Network Device Interface) video streams to SRT (Secure Reliable Transport) with embedded SMPTE-12M/LTC timecode metadata. The application is designed for professional broadcast workflows where accurate timecode preservation is critical.
+A high-performance transcoder that converts NDI (Network Device Interface) video streams to SRT (Secure Reliable Transport) with embedded SMPTE 12M-1 LTC timecode metadata. The application is designed for professional broadcast workflows where accurate timecode preservation is critical.
 
 ## Overview
 
@@ -160,7 +160,7 @@ The application is built on GStreamer and constructs a real-time transcoding pip
 
 ### Timecode Origin and Flow
 
-The timecode originates from the NDI source as UTC-based LTC (Linear Time Code) metadata embedded in the `GstVideoTimeCodeMeta`. This metadata contains:
+In the default operation mode the timecode originates from the NDI source as UTC-based LTC (Linear Time Code) metadata embedded in the `GstVideoTimeCodeMeta`. This metadata contains:
 
 - **Hours, Minutes, Seconds, Frames**: Standard SMPTE timecode components
 - **Drop Frame Flag**: Indicates whether the source uses drop-frame timecode
@@ -297,31 +297,66 @@ The injected timecode is fully compatible with FFmpeg tools:
 ./ndi2srt --discover
 
 # Live production to SRT distribution
-./ndi2srt --ndi-name "Studio Camera 1" --srt-uri "srt://cdn.example.com:9000?mode=caller" \
+./ndi2srt --ndi-name "PC.LOCAL (Studio Camera 1)" --srt-uri "srt://cdn.example.com:9000?mode=caller" \
   --encoder x264enc --bitrate 8000 --verbose
 
 # Multiple NDI sources to different SRT endpoints
-./ndi2srt --ndi-name "Camera 1" --srt-uri "srt://endpoint1:9000?mode=caller" &
-./ndi2srt --ndi-name "Camera 2" --srt-uri "srt://endpoint2:9000?mode=caller" &
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --srt-uri "srt://endpoint1:9000?mode=caller" &
+./ndi2srt --ndi-name "PC.LOCAL (Camera 2)" --srt-uri "srt://endpoint2:9000?mode=caller" &
 ```
 
 ### Content Creation and Streaming
 
 ```bash
 # NDI to YouTube Live via FFmpeg
-./ndi2srt --ndi-name "OBS Virtual Camera" --stdout | \
+./ndi2srt --ndi-name "PC.LOCAL (OBS Virtual Camera)" --stdout | \
   ffmpeg -i - -c copy -f flv rtmp://a.rtmp.youtube.com/live2/STREAM_KEY
 
 # Local recording with timecode
-./ndi2srt --ndi-name "Screen Capture" --stdout --timeout 3600 | \
+./ndi2srt --ndi-name "PC.LOCAL (Screen Capture)" --stdout --timeout 3600 | \
   ffmpeg -i - -c copy "recording_$(date +%Y%m%d_%H%M%S).mp4"
 ```
 
+## Audio Codec Examples
+
+### AAC Audio (Recommended)
+```bash
+# Default AAC with automatic bitrate
+./ndi2srt --ndi-name "PC. LOCAL (Camera 1)" --stdout --audio-codec aac
+
+# AAC with custom bitrate
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --stdout --audio-codec aac --audio-bitrate 192
+```
+
+### MP3 Audio
+```bash
+# MP3 with 128 kbps bitrate
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --stdout --audio-codec mp3 --audio-bitrate 128
+```
+
+### AC3 Audio (Dolby Digital)
+```bash
+# AC3 for broadcast applications
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --stdout --audio-codec ac3 --audio-bitrate 256
+```
+
+### SMPTE 302M (Professional/Experimental)
+```bash
+# SMPTE 302M uncompressed audio (bitrate ignored)
+# Note: Requires experimental codec support
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --stdout --audio-codec smpte302m
+```
+
+### Disable Audio
+```bash
+# Video-only output
+./ndi2srt --ndi-name "PC.LOCAL (Camera 1)" --stdout --no-audio
+```
 ### Debugging and Testing
 
 ```bash
 # Capture debug output and verify timecode injection
-./ndi2srt --ndi-name "Test Source" --stdout --verbose --timeout 10 > test.ts 2>debug.log
+./ndi2srt --ndi-name "PC.LOCAL (Test Source)" --stdout --verbose --timeout 10 > test.ts 2>debug.log
 
 # Verify timecode extraction
 ffprobe -show_entries frame=side_data -of json test.ts | grep -A 5 "SMPTE 12-1 timecode"
@@ -331,7 +366,7 @@ ffprobe -show_entries frame=side_data -of json test.ts | grep -A 5 "SMPTE 12-1 t
 
 ### Common Issues
 
-1. **NDI Source Not Found**: Ensure NDI source is running and discoverable
+1. **NDI Source Not Found**: Ensure NDI source is running and discoverable. Check NDI source name for spelling mistakes.
 2. **SEI Injection Failing**: Check verbose output for SPS VUI parsing errors
 3. **Timecode Not Extracting**: Verify ffprobe shows "SMPTE 12-1 timecode" side data
 4. **High Latency**: Check network conditions and encoder settings
@@ -351,41 +386,3 @@ Use `--verbose` flag to enable detailed logging:
 - **Latency**: Balance between `--zerolatency` and compression efficiency
 
 This architecture ensures that professional broadcast workflows can maintain accurate timecode synchronization when transitioning from NDI production environments to SRT distribution networks, while providing the flexibility to output to various downstream systems.
-
-## Audio Codec Examples
-
-### AAC Audio (Recommended)
-```bash
-# Default AAC with automatic bitrate
-./ndi2srt --ndi-name "Camera 1" --stdout --audio-codec aac
-
-# AAC with custom bitrate
-./ndi2srt --ndi-name "Camera 1" --stdout --audio-codec aac --audio-bitrate 192
-```
-
-### MP3 Audio
-```bash
-# MP3 with 128 kbps bitrate
-./ndi2srt --ndi-name "Camera 1" --stdout --audio-codec mp3 --audio-bitrate 128
-```
-
-### AC3 Audio (Dolby Digital)
-```bash
-# AC3 for broadcast applications
-./ndi2srt --ndi-name "Camera 1" --stdout --audio-codec ac3 --audio-bitrate 256
-```
-
-### SMPTE 302M (Professional/Experimental)
-```bash
-# SMPTE 302M uncompressed audio (bitrate ignored)
-# Note: Requires experimental codec support
-./ndi2srt --ndi-name "Camera 1" --stdout --audio-codec smpte302m
-```
-
-### Disable Audio
-```bash
-# Video-only output
-./ndi2srt --ndi-name "Camera 1" --stdout --no-audio
-```
-
-
