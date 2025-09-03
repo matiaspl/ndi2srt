@@ -1,6 +1,6 @@
 # NDI2SRT - NDI to SRT Transcoder with SMPTE Timecode Injection
 
-A high-performance transcoder that converts NDI (Network Device Interface) video streams to SRT (Secure Reliable Transport) with embedded SMPTE 12M-1 LTC timecode metadata. The application is designed for professional broadcast workflows where accurate timecode preservation is critical.
+A high-performance transcoder that converts NDI (Network Device Interface) video streams to SRT (Secure Reliable Transport) with embedded SMPTE 12M-1 LTC timecode metadata. The application is designed for professional broadcast workflows where accurate timecode preservation is critical. Vibe-coded using Cursor.
 
 ## Overview
 
